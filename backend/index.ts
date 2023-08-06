@@ -1,9 +1,17 @@
 const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors'); // Import cors
 const app = express();
 
 import './database';
 
 app.use(express.json());
+
+// Use morgan middleware for logging
+app.use(morgan('dev'));
+
+// Use cors middleware to enable CORS
+app.use(cors());
 
 // Import routes
 import loginRoute from './routes/login';

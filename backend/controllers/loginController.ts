@@ -62,7 +62,13 @@ const handleValidateOTP = async (email: string, otp: number, res: Response) => {
 
     const recentOTPToken = await OTPTokenModel.findOne({ user_id: user._id }, {}, { sort: { validity_till: -1 } });
 
-    if (!recentOTPToken || recentOTPToken.validity_till < new Date() || recentOTPToken.value !== otp) {
+    console.log('recentOtpToken', recentOTPToken);
+    console.log(otp, email, 'otp_email');
+
+    const check = !recentOTPToken || recentOTPToken.value !== otp;
+    console.log(check)
+
+    if (!recentOTPToken || recentOTPToken.validity_till < new Date() || recentOTPToken.value != otp) {
       res.status(400).json({ message: 'Incorrect OTP or expired validity.' });
       return;
     }
