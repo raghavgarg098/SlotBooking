@@ -8,10 +8,12 @@ app.use(express.json());
 // Import routes
 import loginRoute from './routes/login';
 import slotsRoute from './routes/slots';
+import slotRoute from './routes/slot';
 
 // Use routes
 app.use('/login', loginRoute);
 app.use('/slots', slotsRoute);
+app.use('/slot', slotRoute);
 
 // Start the server
 const PORT = process.env.PORT || 3003;
