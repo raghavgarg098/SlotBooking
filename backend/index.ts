@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 
+import './database';
+
 app.use(express.json());
 
 // Import routes
