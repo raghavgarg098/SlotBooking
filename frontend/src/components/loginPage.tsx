@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 
-const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  onLoginSuccess: () => void;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtpInput, setShowOtpInput] = useState(false);
@@ -34,13 +38,12 @@ const LoginPage: React.FC = () => {
       });
 
       if (response.status === 200) {
-        console.log('success');
+        onLoginSuccess(); // Call the callback to switch to the HelloWorldPage
       }
     } catch (error) {
       console.error('Error validating OTP:', error);
     }
   };
-
 
   return (
     <div className="login-page">
