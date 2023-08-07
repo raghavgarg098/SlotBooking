@@ -1,12 +1,8 @@
 import { Request, Response } from 'express';
-import UserModel from '../models/userModel';
 import UserSlotsModel from '../models/userSlotsModel';
 
 const validateTimeDifference = (start: number, end: number): boolean => {
-  const diffInMinutes = (end - start) / (60 * 1000); // Convert to minutes
-  console.log('start', start);
-  console.log('end', end);
-  console.log(diffInMinutes);
+  const diffInMinutes = (end - start) / (60 * 1000);
   return diffInMinutes === 30 || diffInMinutes === 60;
 };
 
