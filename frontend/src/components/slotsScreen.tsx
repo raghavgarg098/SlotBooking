@@ -105,7 +105,7 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
   views={['day']}
   toolbar={false}
   selectable
-  onSelectSlot={handleSlotSelect} // Use onSelectEvent instead of onSelectSlot
+  onSelectSlot={handleSlotInvalidate}
 />
     </div>
   );
