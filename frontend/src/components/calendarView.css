@@ -1,0 +1,91 @@
+/* Calendar View */
+.calendar-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  /* Date Picker */
+  .date-picker-container {
+    margin-bottom: 20px;
+  }
+  
+  .react-datepicker-wrapper {
+    display: inline-block;
+  }
+  
+  .react-datepicker {
+    font-family: Arial, sans-serif;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: white;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .react-datepicker__input-container {
+    display: block;
+  }
+  
+  .react-datepicker__input-container input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  /* Time Slot Grid */
+  .time-slot-grid {
+    display: grid;
+    grid-template-columns: 50px auto; /* Adjust column sizes as needed */
+    gap: 10px;
+  }
+  
+  /* Time Markers */
+  .time-markers {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .time-marker {
+    font-size: 14px;
+    text-align: right;
+    padding-right: 5px;
+    color: #888;
+  }
+  
+  /* Booked Slots */
+  .booked-slots {
+    position: relative;
+  }
+  
+  .booked-slot {
+    position: absolute;
+    background-color: #3498db;
+    color: white;
+    border: 1px solid #2980b9;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Invalidate Button */
+  .booked-slot button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  
+  /* Hover effect on booked slots */
+  .booked-slot:hover {
+    background-color: #2980b9;
+    border: 1px solid #2466a8;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  

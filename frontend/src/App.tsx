@@ -10,8 +10,11 @@ enum Page {
 
 function App() {
   const [page, setPage] = useState<Page>(Page.LOGIN);
+  const [user_id, setUserId] = useState<string>('');
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (userId: string) => {
+    console.log(userId)
+    setUserId(userId);
     setPage(Page.HELLO_WORLD);
   };
 
@@ -19,7 +22,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         {page === Page.LOGIN && <LoginPage onLoginSuccess={handleLoginSuccess} />}
-        {page === Page.HELLO_WORLD && <HelloWorldPage />}
+        {page === Page.HELLO_WORLD && <HelloWorldPage userId={user_id} />}
       </header>
     </div>
   );

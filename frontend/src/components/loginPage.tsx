@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (userId: string) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
@@ -38,7 +38,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       });
 
       if (response.status === 200) {
-        onLoginSuccess(); // Call the callback to switch to the HelloWorldPage
+        const data = await response.json();
+        onLoginSuccess(data.user_id);
       }
     } catch (error) {
       console.error('Error validating OTP:', error);

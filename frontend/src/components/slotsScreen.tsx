@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import './calendarView.css'
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
 
-const CalendarView: React.FC = () => {
+
+const localizer = momentLocalizer(moment);
+
+interface BookedSlot {
+  slot_id: string;
+  scheduled_start_datetime: number;
+  scheduled_end_datetime: number;
+}
+
+interface calendarViewProps{
+  userId: string;
+}
+
+const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [bookedSlots, setBookedSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
 
   useEffect(() => {
     fetchBookedSlots(selectedDate);
@@ -17,10 +33,14 @@ const CalendarView: React.FC = () => {
     const endEpoch = startEpoch + 24 * 60 * 60 * 1000 - 1;
 
     try {
-      const response = await fetch(`/slots?user_id=user_id_here&start_datetime=${startEpoch}&end_datetime=${endEpoch}`);
+      const response = await fetch(`http://localhost:3003/slots?user_id=${userId}&start_datetime=${startEpoch}&end_datetime=${endEpoch}`);
       if (response.ok) {
         const data = await response.json();
-        setBookedSlots(data);
+        if (Array.isArray(data)) { // Check if data is an array before setting the state
+          setBookedSlots(data);
+        } else {
+          console.error('Fetched data is not an array:', data);
+        }
       } else {
         console.error('Error fetching booked slots:', response.statusText);
       }
@@ -28,6 +48,8 @@ const CalendarView: React.FC = () => {
       console.error('Error fetching booked slots:', error);
     }
   };
+
+
 
   const handleSlotInvalidate = async (slotId: string) => {
     try {
@@ -50,29 +72,46 @@ const CalendarView: React.FC = () => {
     }
   };
 
+  const handleSlotSelect = (event: any) => {
+    console.log('Selected slot start:', event.start);
+    console.log('Selected slot end:', event.end);
+  
+    // Now you can perform any additional actions or logic related to the selected slot
+  };
+
+  const events = Array.isArray(bookedSlots)
+    ? bookedSlots.map(slot => ({
+        id: slot.slot_id,
+        title: 'Booked',
+        start: new Date(slot.scheduled_start_datetime),
+        end: new Date(slot.scheduled_end_datetime),
+      }))
+    : [];
+
+
   return (
     <div className="calendar-view">
-      {/* Date Selector */}
-      <DatePicker selected={selectedDate} onChange={(date) => setSelectedDate(date)} />
-
-      {/* Calendar */}
-      <div className="calendar">
-        {/* Render the calendar here */}
+      <h2>Calendar View</h2>
+      <div className="date-picker-container">
+        <DatePicker selected={selectedDate} onChange={(date) => setSelectedDate(date)} />
       </div>
-
-      {/* Booked Slots */}
-      <div className="booked-slots">
-        {bookedSlots.map((slot: any) => (
-          <div key={slot.slot_id} className="booked-slot">
-            {/* Render the booked slot information */}
-            <span>{new Date(slot.scheduled_start_datetime).toLocaleTimeString()}</span>
-            <span>{new Date(slot.scheduled_end_datetime).toLocaleTimeString()}</span>
-            <button onClick={() => handleSlotInvalidate(slot.slot_id)}>Invalidate</button>
-          </div>
-        ))}
-      </div>
+      <Calendar
+  localizer={localizer}
+  events={events}
+  date={selectedDate}
+  startAccessor="start"
+  endAccessor="end"
+  defaultView="day"
+  views={['day']}
+  toolbar={false}
+  selectable
+  onSelectSlot={handleSlotSelect} // Use onSelectEvent instead of onSelectSlot
+/>
     </div>
   );
+
+
+
 };
 
 export default CalendarView;
