@@ -63,6 +63,8 @@ const slotsController = {
     try {
       const isValid = await validateSlot(user_id, scheduled_start_datetime, scheduled_end_datetime);
 
+      console.log(user_id, scheduled_start_datetime, scheduled_end_datetime);
+
       if (!isValid) {
         res.status(400).json({ message: 'Invalid slot data.' });
         return;
@@ -79,8 +81,6 @@ const slotsController = {
 
   getSlots: async (req: Request, res: Response) => {
     const { user_id, start_datetime, end_datetime } = req.query;
-
-    console.log(user_id, start_datetime, end_datetime);
   
     if (!user_id || !start_datetime || !end_datetime) {
       res.status(400).json({ message: 'Missing required parameters.' });
@@ -108,12 +108,19 @@ const slotsController = {
         scheduled_start_datetime: 1,
         scheduled_end_datetime: 1,
       });
-  
-      res.json({ slots });
+    
+      const formattedSlots = slots.map(slot => ({
+        _id: slot._id,
+        scheduled_start_datetime: slot.scheduled_start_datetime.getTime(), // Convert to epoch timestamp
+        scheduled_end_datetime: slot.scheduled_end_datetime.getTime(), // Convert to epoch timestamp
+      }));
+    
+      res.json(formattedSlots);
     } catch (error) {
       console.error('Error:', error);
       res.status(500).json({ message: 'Error fetching slots.' });
     }
+    
   },
   
 };
