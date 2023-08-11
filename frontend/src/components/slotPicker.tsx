@@ -1,5 +1,5 @@
 import React from 'react';
-import './calendarView.css';
+import '../App.css';
 
 interface SlotPickerProps {
   children: React.ReactNode;
