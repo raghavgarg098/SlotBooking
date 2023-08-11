@@ -80,9 +80,9 @@ const slotsController = {
   },
 
   getSlots: async (req: Request, res: Response) => {
-    const { user_id, start_datetime, end_datetime } = req.query;
+    const { start_datetime, end_datetime } = req.query;
   
-    if (!user_id || !start_datetime || !end_datetime) {
+    if (!start_datetime || !end_datetime) {
       res.status(400).json({ message: 'Missing required parameters.' });
       return;
     }
@@ -97,7 +97,6 @@ const slotsController = {
   
     try {
       const slots = await UserSlotsModel.find({
-        user_id: user_id as string,
         status: 'ACTIVE',
         $or: [
           { scheduled_start_datetime: { $gte: new Date(startTime), $lt: new Date(endTime) } },
@@ -105,12 +104,14 @@ const slotsController = {
         ],
       }, {
         _id: 1,
+        user_id: 1, // Include user_id in the response
         scheduled_start_datetime: 1,
         scheduled_end_datetime: 1,
       });
     
       const formattedSlots = slots.map(slot => ({
         slot_id: slot._id,
+        user_id: slot.user_id, // Include user_id in the response
         scheduled_start_datetime: slot.scheduled_start_datetime.getTime(), // Convert to epoch timestamp
         scheduled_end_datetime: slot.scheduled_end_datetime.getTime(), // Convert to epoch timestamp
       }));
@@ -122,6 +123,7 @@ const slotsController = {
     }
     
   },
+
   
 };
 export default slotsController;

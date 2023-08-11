@@ -4,11 +4,14 @@ import 'react-datepicker/dist/react-datepicker.css';
 import '../App.css'
 import moment from 'moment';
 import SlotPicker from './slotPicker';
+import SlotModal from './slotModal';
+import Modal from 'react-modal';
 
 interface BookedSlot {
   slot_id: string;
   scheduled_start_datetime: number;
   scheduled_end_datetime: number;
+  user_id: string;
 }
 
 interface calendarViewProps{
@@ -18,6 +21,8 @@ interface calendarViewProps{
 const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchBookedSlots(selectedDate);
@@ -90,30 +95,6 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
     });
   };
   
-
-  const handleSlotSelect = async (slotId: number) => {
-    const startEpoch = getStartEpoch(slotId);
-    const endEpoch = getEndEpoch(startEpoch);
-    
-    try {
-      if (isSlotSelected(slotId)) {
-        const originalSlotId = getOriginalSlotId(slotId);
-        console.log(slotId, originalSlotId, startEpoch, endEpoch)
-        await handleSlotDeselection(originalSlotId);
-      } else {
-        const response = await fetchSlotBooking(userId, startEpoch, endEpoch);
-  
-        if (response.ok) {
-          fetchBookedSlots(selectedDate);
-        } else {
-          console.error('Error booking slot:', response.statusText);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling slot selection:', error);
-    }
-  };
-  
   const fetchSlotBooking = async (userId: string, startEpoch: number, endEpoch: number) => {
     return await fetch('http://localhost:3003/slots', {
       method: 'POST',
@@ -173,7 +154,7 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
           className={`slot ${
             isSlotSelected(slotId) ? 'selected' : ''
           } ${isSlotBooked(slotId) ? 'booked' : ''}`}
-          onClick={() => handleSlotSelect(slotId)}
+          onClick={() => handleSlotClick(slotId)}
         >
           {moment(startTime).format('hh:mm A')}
         </div>
@@ -181,6 +162,45 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
     }
 
     return slots;
+  };
+
+  const handleSlotClick = (slotId: number) => {
+    setSelectedSlot(slotId);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedSlot(null);
+    setShowModal(false);
+  };
+
+  const handleBookSlot = async (slotId:number) => {
+    const startEpoch = getStartEpoch(slotId);
+    const endEpoch = getEndEpoch(startEpoch);
+
+    try {
+      const response = await fetchSlotBooking(userId, startEpoch, endEpoch);
+  
+        if (response.ok) {
+          fetchBookedSlots(selectedDate);
+        } else {
+          console.error('Error booking slot:', response.statusText);
+        }
+    } catch (error) {
+      console.error('Error handling slot selection:', error);
+    }
+    handleCloseModal();
+  };
+
+  const handleCancelSlot = async (slotId: number) => {
+    const originalSlotId = getOriginalSlotId(slotId);
+    await handleSlotDeselection(originalSlotId);
+    handleCloseModal();
+  };
+
+  const closeModal = () => {
+    setSelectedSlot(null);
+    setShowModal(false);
   };
 
   return (
@@ -192,6 +212,37 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
       <div className="slot-picker-container">
         <SlotPicker>{renderSlots()}</SlotPicker>
       </div>
+      {/* {showModal && selectedSlot !== null && (
+        <SlotModal
+          slotId={selectedSlot}
+          user_id={bookedSlots.find(slot => slot.slot_id === getOriginalSlotId(selectedSlot as number))?.user_id}
+          onClose={handleCloseModal}
+          onBookSlot={handleBookSlot}
+          onCancelSlot={handleCancelSlot}
+          isSlotSelected={isSlotSelected(selectedSlot)}
+          isSlotBooked={isSlotBooked(selectedSlot)}
+          currentUserId={userId}
+        />
+      )} */}
+      {selectedSlot !== null && (
+        <Modal
+          isOpen={showModal}
+          onRequestClose={closeModal}
+          contentLabel="Slot Details"
+          ariaHideApp={false} // Disable aria-hidden for accessibility
+        >
+          <SlotModal
+          slotId={selectedSlot}
+          user_id={bookedSlots.find(slot => slot.slot_id === getOriginalSlotId(selectedSlot))?.user_id}
+          onClose={handleCloseModal}
+          onBookSlot={handleBookSlot}
+          onCancelSlot={handleCancelSlot}
+          isSlotSelected={isSlotSelected(selectedSlot)}
+          isSlotBooked={isSlotBooked(selectedSlot)}
+          currentUserId={userId}
+        />
+        </Modal>
+      )}
     </div>
   );
 };
