@@ -5,7 +5,6 @@ import './calendarView.css'
 import moment from 'moment';
 import SlotPicker from './slotPicker';
 
-
 interface BookedSlot {
   slot_id: string;
   scheduled_start_datetime: number;
@@ -16,14 +15,13 @@ interface calendarViewProps{
   userId: string;
 }
 
-const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
+const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
-  const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
 
   useEffect(() => {
     fetchBookedSlots(selectedDate);
-  }, [selectedDate, selectedSlots]);
+  }, [selectedDate]);
 
   const fetchBookedSlots = async (date: Date) => {
     const startOfDay = new Date(date);
@@ -35,7 +33,7 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
       const response = await fetch(`http://localhost:3003/slots?user_id=${userId}&start_datetime=${startEpoch}&end_datetime=${endEpoch}`);
       if (response.ok) {
         const data = await response.json();
-        if (Array.isArray(data)) { // Check if data is an array before setting the state
+        if (Array.isArray(data)) {
           setBookedSlots(data);
         } else {
           console.error('Fetched data is not an array:', data);
@@ -49,38 +47,12 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
   };
 
   const handleSlotSelect = async (slotId: number) => {
-    const isCurrentlySelected = isSlotSelected(slotId);
-  
-    if (isCurrentlySelected) {
-      await handleSlotDeselection(slotId);
-    } else {
-      await handleSlotSelection(slotId);
-    }
-  };
-  
-  const handleSlotDeselection = async (slotId: number) => {
-    setSelectedSlots(selectedSlots.filter(id => id !== slotId));
-    
-    try {
-      const response = await fetchSlotAction(slotId, 'INVALIDATE');
-      
-      if (response.ok) {
-        fetchBookedSlots(selectedDate);
-      } else {
-        console.error('Error invalidating slot:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error invalidating slot:', error);
-    }
-  };
-  
-  const handleSlotSelection = async (slotId: number) => {
     const startEpoch = getStartEpoch(slotId);
     const endEpoch = getEndEpoch(startEpoch);
-  
+
     try {
       const response = await fetchSlotBooking(userId, startEpoch, endEpoch);
-  
+
       if (response.ok) {
         fetchBookedSlots(selectedDate);
       } else {
@@ -90,17 +62,7 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
       console.error('Error booking slot:', error);
     }
   };
-  
-  const fetchSlotAction = async (slotId: number, action: string) => {
-    return await fetch('http://localhost:3003/slot', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ slot_id: slotId.toString(), action }),
-    });
-  };
-  
+
   const fetchSlotBooking = async (userId: string, startEpoch: number, endEpoch: number) => {
     return await fetch('http://localhost:3003/slots', {
       method: 'POST',
@@ -110,24 +72,29 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
       body: JSON.stringify({ user_id: userId, scheduled_start_datetime: startEpoch, scheduled_end_datetime: endEpoch }),
     });
   };
-  
+
   const getStartEpoch = (slotId: number) => {
     return moment()
       .startOf('day')
       .add(slotId * 30, 'minutes')
-      .valueOf(); // Get epoch timestamp
+      .valueOf();
   };
-  
+
   const getEndEpoch = (startEpoch: number) => {
     return moment(startEpoch)
       .add(30, 'minutes')
-      .valueOf(); // Get epoch timestamp
+      .valueOf();
   };
-    
-  
 
   const isSlotSelected = (slotId: number) => {
-    return selectedSlots.includes(slotId);
+    const startEpoch = getStartEpoch(slotId);
+    const endEpoch = getEndEpoch(startEpoch);
+
+    return bookedSlots.some(
+      (slot) =>
+        slot.scheduled_start_datetime <= endEpoch &&
+        slot.scheduled_end_datetime >= startEpoch
+    );
   };
 
   const isSlotBooked = (slotId: number) => {
@@ -165,7 +132,6 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
     return slots;
   };
 
-
   return (
     <div className="calendar-view">
       <h2>Calendar View</h2>
@@ -177,8 +143,6 @@ const CalendarView: React.FC<calendarViewProps> = ({userId}) => {
       </div>
     </div>
   );
-
-
 };
 
 export default CalendarView;
