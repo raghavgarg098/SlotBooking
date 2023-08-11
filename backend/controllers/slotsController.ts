@@ -110,7 +110,7 @@ const slotsController = {
       });
     
       const formattedSlots = slots.map(slot => ({
-        _id: slot._id,
+        slot_id: slot._id,
         scheduled_start_datetime: slot.scheduled_start_datetime.getTime(), // Convert to epoch timestamp
         scheduled_end_datetime: slot.scheduled_end_datetime.getTime(), // Convert to epoch timestamp
       }));

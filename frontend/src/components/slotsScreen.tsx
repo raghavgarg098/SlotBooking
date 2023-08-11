@@ -46,23 +46,74 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
     }
   };
 
-  const handleSlotSelect = async (slotId: number) => {
+  const getOriginalSlotId = (slotId: number) => {
     const startEpoch = getStartEpoch(slotId);
     const endEpoch = getEndEpoch(startEpoch);
+  
+    for (const slot of bookedSlots) {
+      if (
+        slot.scheduled_start_datetime === startEpoch &&
+        slot.scheduled_end_datetime === endEpoch
+      ) {
+        console.log("Found matching slot:", slot);
+        return slot.slot_id;
+      }
+    }
+    console.log("No matching slot found");
+    return null;
+  };
+  
 
+  const handleSlotDeselection = async (originalSlotId: string|null) => {
     try {
-      const response = await fetchSlotBooking(userId, startEpoch, endEpoch);
-
-      if (response.ok) {
-        fetchBookedSlots(selectedDate);
-      } else {
-        console.error('Error booking slot:', response.statusText);
+      if (originalSlotId) {
+        const response = await fetchSlotAction(originalSlotId, 'INVALIDATE');
+        
+        if (response.ok) {   
+          fetchBookedSlots(selectedDate);
+        } else {
+          console.error('Error invalidating slot:', response.statusText);
+        }
       }
     } catch (error) {
-      console.error('Error booking slot:', error);
+      console.error('Error handling slot deselection:', error);
     }
   };
 
+  const fetchSlotAction = async (slotId: string, action: string) => {
+    return await fetch('http://localhost:3003/slot', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ slot_id: slotId, action }),
+    });
+  };
+  
+
+  const handleSlotSelect = async (slotId: number) => {
+    const startEpoch = getStartEpoch(slotId);
+    const endEpoch = getEndEpoch(startEpoch);
+    
+    try {
+      if (isSlotSelected(slotId)) {
+        const originalSlotId = getOriginalSlotId(slotId);
+        console.log(slotId, originalSlotId, startEpoch, endEpoch)
+        await handleSlotDeselection(originalSlotId);
+      } else {
+        const response = await fetchSlotBooking(userId, startEpoch, endEpoch);
+  
+        if (response.ok) {
+          fetchBookedSlots(selectedDate);
+        } else {
+          console.error('Error booking slot:', response.statusText);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling slot selection:', error);
+    }
+  };
+  
   const fetchSlotBooking = async (userId: string, startEpoch: number, endEpoch: number) => {
     return await fetch('http://localhost:3003/slots', {
       method: 'POST',
@@ -74,11 +125,11 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
   };
 
   const getStartEpoch = (slotId: number) => {
-    return moment()
+    return moment(selectedDate)
       .startOf('day')
       .add(slotId * 30, 'minutes')
       .valueOf();
-  };
+  };  
 
   const getEndEpoch = (startEpoch: number) => {
     return moment(startEpoch)
@@ -92,8 +143,8 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
 
     return bookedSlots.some(
       (slot) =>
-        slot.scheduled_start_datetime <= endEpoch &&
-        slot.scheduled_end_datetime >= startEpoch
+        slot.scheduled_start_datetime === startEpoch &&
+        slot.scheduled_end_datetime === endEpoch
     );
   };
 
@@ -103,8 +154,8 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
 
     return bookedSlots.some(
       (slot) =>
-        slot.scheduled_start_datetime <= endEpoch &&
-        slot.scheduled_end_datetime >= startEpoch
+        slot.scheduled_start_datetime === startEpoch &&
+        slot.scheduled_end_datetime === endEpoch
     );
   };
 
