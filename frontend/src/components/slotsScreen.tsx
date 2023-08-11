@@ -148,25 +148,32 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
   const renderSlots = () => {
     const slots: JSX.Element[] = [];
     const numberOfSlots = 48; // 24 hours with half-hour intervals
-
+  
     for (let i = 0; i < numberOfSlots; i++) {
       const startTime = moment().startOf('day').add(i * 30, 'minutes').toDate();
       const slotId = i;
-
+      const isSelected = isSlotSelected(slotId);
+      const isBooked = isSlotBooked(slotId);
+      const originalSlot = getOriginalSlot(slotId)
+      const isOccupied = isSelected && isBooked && originalSlot && userId !== originalSlot?.user_id;
+  
       slots.push(
         <div
           key={slotId}
-          className={`slot ${isSlotSelected(slotId) ? 'selected' : ''
-            } ${isSlotBooked(slotId) ? 'booked' : ''}`}
+          className={`slot ${
+            isSelected ? (isOccupied ? 'occupied' : 'selected') : ''
+          } ${isBooked ? 'booked' : ''}`}
           onClick={() => handleSlotClick(slotId)}
         >
           {moment(startTime).format('hh:mm A')}
         </div>
       );
     }
-
+  
     return slots;
   };
+  
+  
 
   const handleSlotClick = (slotId: number) => {
     setSelectedSlot(slotId);
@@ -221,7 +228,7 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
           isOpen={showModal}
           onRequestClose={closeModal}
           contentLabel="Slot Details"
-          ariaHideApp={false} // Disable aria-hidden for accessibility
+          ariaHideApp={false}
         >
           <SlotModal
             slotId={selectedSlot}

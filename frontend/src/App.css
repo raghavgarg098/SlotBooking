@@ -98,6 +98,12 @@
   border-color: #2980b9;
 }
 
+.slot.occupied {
+  background-color: red;
+  color: white;
+  border-color: darkred;
+}
+
 /* Booked Slots */
 .booked-slots {
   position: relative;
