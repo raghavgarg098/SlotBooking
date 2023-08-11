@@ -5,6 +5,7 @@ export interface UserSlots extends Document {
   scheduled_start_datetime: Date;
   scheduled_end_datetime: Date;
   status: string;
+  message: string;
 }
 
 const userSlotsSchema: Schema = new Schema({
@@ -12,6 +13,7 @@ const userSlotsSchema: Schema = new Schema({
   scheduled_start_datetime: { type: Date, required: true },
   scheduled_end_datetime: { type: Date, required: true },
   status: { type: String, required: true },
+  message: { type: String, default: '' },
 });
 
 const UserSlotsModel = mongoose.model<UserSlots>('UserSlots', userSlotsSchema);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import '../App.css'
+import '../App.css';
 import moment from 'moment';
 import SlotPicker from './slotPicker';
 import SlotModal from './slotModal';
@@ -12,9 +12,10 @@ interface BookedSlot {
   scheduled_start_datetime: number;
   scheduled_end_datetime: number;
   user_id: string;
+  message: string|null;
 }
 
-interface calendarViewProps{
+interface calendarViewProps {
   userId: string;
 }
 
@@ -52,29 +53,33 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
   };
 
   const getOriginalSlotId = (slotId: number) => {
+
+    const originalSlot = getOriginalSlot(slotId);
+    if (originalSlot) {
+        return originalSlot.slot_id;
+    } else {
+        return null;
+    }
+  };
+
+  const getOriginalSlot = (slotId: number) => {
     const startEpoch = getStartEpoch(slotId);
     const endEpoch = getEndEpoch(startEpoch);
   
-    for (const slot of bookedSlots) {
-      if (
+    return bookedSlots.find(
+      (slot) =>
         slot.scheduled_start_datetime === startEpoch &&
         slot.scheduled_end_datetime === endEpoch
-      ) {
-        console.log("Found matching slot:", slot);
-        return slot.slot_id;
-      }
-    }
-    console.log("No matching slot found");
-    return null;
+    ) || null;
   };
-  
 
-  const handleSlotDeselection = async (originalSlotId: string|null) => {
+
+  const handleSlotDeselection = async (originalSlotId: string | null) => {
     try {
       if (originalSlotId) {
         const response = await fetchSlotAction(originalSlotId, 'INVALIDATE');
-        
-        if (response.ok) {   
+
+        if (response.ok) {
           fetchBookedSlots(selectedDate);
         } else {
           console.error('Error invalidating slot:', response.statusText);
@@ -94,14 +99,14 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
       body: JSON.stringify({ slot_id: slotId, action }),
     });
   };
-  
-  const fetchSlotBooking = async (userId: string, startEpoch: number, endEpoch: number) => {
+
+  const fetchSlotBooking = async (userId: string, startEpoch: number, endEpoch: number, message:string|null) => {
     return await fetch('http://localhost:3003/slots', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ user_id: userId, scheduled_start_datetime: startEpoch, scheduled_end_datetime: endEpoch }),
+      body: JSON.stringify({ user_id: userId, scheduled_start_datetime: startEpoch, scheduled_end_datetime: endEpoch, message:message }),
     });
   };
 
@@ -110,7 +115,7 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
       .startOf('day')
       .add(slotId * 30, 'minutes')
       .valueOf();
-  };  
+  };
 
   const getEndEpoch = (startEpoch: number) => {
     return moment(startEpoch)
@@ -151,9 +156,8 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
       slots.push(
         <div
           key={slotId}
-          className={`slot ${
-            isSlotSelected(slotId) ? 'selected' : ''
-          } ${isSlotBooked(slotId) ? 'booked' : ''}`}
+          className={`slot ${isSlotSelected(slotId) ? 'selected' : ''
+            } ${isSlotBooked(slotId) ? 'booked' : ''}`}
           onClick={() => handleSlotClick(slotId)}
         >
           {moment(startTime).format('hh:mm A')}
@@ -174,18 +178,18 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
     setShowModal(false);
   };
 
-  const handleBookSlot = async (slotId:number) => {
+  const handleBookSlot = async (slotId: number, message:string|null) => {
     const startEpoch = getStartEpoch(slotId);
     const endEpoch = getEndEpoch(startEpoch);
 
     try {
-      const response = await fetchSlotBooking(userId, startEpoch, endEpoch);
-  
-        if (response.ok) {
-          fetchBookedSlots(selectedDate);
-        } else {
-          console.error('Error booking slot:', response.statusText);
-        }
+      const response = await fetchSlotBooking(userId, startEpoch, endEpoch, message);
+
+      if (response.ok) {
+        fetchBookedSlots(selectedDate);
+      } else {
+        console.error('Error booking slot:', response.statusText);
+      }
     } catch (error) {
       console.error('Error handling slot selection:', error);
     }
@@ -212,18 +216,6 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
       <div className="slot-picker-container">
         <SlotPicker>{renderSlots()}</SlotPicker>
       </div>
-      {/* {showModal && selectedSlot !== null && (
-        <SlotModal
-          slotId={selectedSlot}
-          user_id={bookedSlots.find(slot => slot.slot_id === getOriginalSlotId(selectedSlot as number))?.user_id}
-          onClose={handleCloseModal}
-          onBookSlot={handleBookSlot}
-          onCancelSlot={handleCancelSlot}
-          isSlotSelected={isSlotSelected(selectedSlot)}
-          isSlotBooked={isSlotBooked(selectedSlot)}
-          currentUserId={userId}
-        />
-      )} */}
       {selectedSlot !== null && (
         <Modal
           isOpen={showModal}
@@ -232,15 +224,17 @@ const CalendarView: React.FC<calendarViewProps> = ({ userId }) => {
           ariaHideApp={false} // Disable aria-hidden for accessibility
         >
           <SlotModal
-          slotId={selectedSlot}
-          user_id={bookedSlots.find(slot => slot.slot_id === getOriginalSlotId(selectedSlot))?.user_id}
-          onClose={handleCloseModal}
-          onBookSlot={handleBookSlot}
-          onCancelSlot={handleCancelSlot}
-          isSlotSelected={isSlotSelected(selectedSlot)}
-          isSlotBooked={isSlotBooked(selectedSlot)}
-          currentUserId={userId}
-        />
+            slotId={selectedSlot}
+            user_id={bookedSlots.find(slot => slot.slot_id === getOriginalSlotId(selectedSlot))?.user_id}
+            onClose={handleCloseModal}
+            onBookSlot={handleBookSlot}
+            onCancelSlot={handleCancelSlot}
+            isSlotBooked={isSlotBooked(selectedSlot)}
+            currentUserId={userId}
+            originalSlot={getOriginalSlot(selectedSlot)}
+            startEpoch={getStartEpoch(selectedSlot)}
+            endEpoch={getEndEpoch(getStartEpoch(selectedSlot))}
+          />
         </Modal>
       )}
     </div>

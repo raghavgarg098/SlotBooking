@@ -6,8 +6,6 @@ const slotController = {
   updateSlot: async (req: Request, res: Response) => {
     const { slot_id, action } = req.body;
 
-    console.log(slot_id, action);
-
     if (action !== 'INVALIDATE') {
       res.status(400).json({ message: 'Invalid action.' });
       return;
